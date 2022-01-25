@@ -69,6 +69,12 @@ pub fn check_header(header: u32) -> bool {
     true
 }
 
+/// Returns true if the provided word is a frame sync.
+#[inline(always)]
+pub fn is_frame_sync(sync: u32) -> bool {
+    (sync & 0xffe0_0000) == 0xffe0_0000
+}
+
 /// Synchronize the provided reader to the end of the frame header, and return the frame header as
 /// as `u32`.
 pub fn sync_frame<B: ReadBytes>(reader: &mut B) -> Result<u32> {
@@ -78,7 +84,7 @@ pub fn sync_frame<B: ReadBytes>(reader: &mut B) -> Result<u32> {
         // Synchronize stream to the next frame using the sync word. The MP3 frame header always
         // starts at a byte boundary with 0xffe (11 consecutive 1 bits.) if supporting up to MPEG
         // version 2.5.
-        while (sync & 0xffe0_0000) != 0xffe0_0000 {
+        while !is_frame_sync(sync) {
             sync = (sync << 8) | u32::from(reader.read_u8()?);
         }
 
