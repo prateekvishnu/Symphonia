@@ -676,7 +676,11 @@ fn print_progress(ts: u64, dur: Option<u64>, tb: Option<TimeBase>) {
             };
         }
 
-        let i = ((NUM_STEPS as u64).saturating_mul(ts) / dur).clamp(0, NUM_STEPS as u64);
+        let i = (NUM_STEPS as u64)
+            .saturating_mul(ts)
+            .checked_div(dur)
+            .unwrap_or(0)
+            .clamp(0, NUM_STEPS as u64);
 
         &PROGRESS_BAR[i as usize]
     }
@@ -709,6 +713,9 @@ fn print_progress(ts: u64, dur: Option<u64>, tb: Option<TimeBase>) {
     else {
         write!(output, "\r\u{25b6}\u{fe0f}  {}", ts).unwrap();
     }
+
+    // This extra space is a workaround for Konsole to correctly erase the previous line.
+    write!(output, " ").unwrap();
 
     // Flush immediately since stdout is buffered.
     output.flush().unwrap();
